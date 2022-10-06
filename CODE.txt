@@ -1,0 +1,180 @@
+def expandIn(arr,off,cont,n,lee):
+    def bitwise(arr,off):
+        vol=[]
+        for i in range(len(arr)):
+            num=(arr[i] & off[i])
+            vol.append(num)
+        return vol
+    def meancover(arr,arr2): #here arr2 will be that array which will go for coverd by expansion or not
+        num= bitwise(arr,arr2)
+        if(num==arr2):
+           c=1
+        else:
+           c=0
+        return c
+    newlist=[] # it will store the expanded array    
+    def valid(arr,n,off,cnt):# represent the size of given array and we will pass array as call by reference offset will be call by values  # 
+        for i in range(n):
+            g=0
+            num=[]
+            c=0
+            if(arr[i]==0):
+                arr[i]=1
+                for k in range(cnt):
+                    c=0
+                    # taking bitwise and 
+                    num=bitwise(arr,off[k])
+                    #print(num)
+                    # checking for the valid condition or not        
+                    for j in range(0,n,2):
+                        if(num[j]==0 and num[j+1]==0):
+                            c=1
+                            g=g+1
+                            break
+                if(c==0):
+                    arr[i]=0
+                if(c==1 and g!=cnt):
+                    arr[i]=0
+        newlist.append(arr)
+        return arr
+    ar=[] # for the column wise sum/ find weight
+    for i in range(2*n):
+        sum=0
+        for j in range(lee):
+            sum+=arr[j][i]
+        ar.append(sum)
+    dot=[] # store the weight of 
+    dup=[]# it store the duplicate value of dot in sorted order
+    for i in range(lee):
+        sum=0
+        for j in range(2*n):
+            sum+=ar[j]*arr[i][j]
+        dup.append(sum)  
+    for i in range(len(dup)):
+        dot.append(dup[i])
+    dup.sort()
+    lis=[]
+    for i in range(len(dup)):
+        for j in range(len(dot)):
+            if(dup[i]==dot[j] and (j not in lis)):
+                k=j
+                lan=[]
+                #print(arr[k])
+                lan=valid(arr[k],len(arr[k]),off,cont)
+                for l in range(len(dot)):
+                    c=meancover(lan,arr[l])
+                   # print(arr[l],c,lan,dup,dot)
+                    if(c==1 and dot[l] in dup): #if c=1 tells us that arr[i] get covered by the arr[k] so we shouldn't need send it for the expansion
+                        dup[dup.index(dot[l])]=1000
+                        lis.append(l)
+
+    return newlist
+def reduce(lst):
+    count=0
+    for i in range(0,len(lst),1):
+        for j in range(0,len(lst),1):
+        	if i != j:
+        	    for k in range(0,len(lst[i]),2):
+        	        for l in range(0,len(lst[j]),2):
+            		    if k != l:
+            			    if (lst[i][k] == lst[j][l] and  lst[i][k+1] == lst[j][l+1]):
+            			        lst[i][k]=0
+            			        lst[i][k+1]=0
+            			        count+=1
+        
+    return lst
+def irredundant(a):
+    for i in range(0,len(a),1):
+        ct = 0
+        for j in range(0,len(a[i]),2):
+    
+            for k in range(0,len(a),1):
+                for l in range(0,len(a[k]),2):
+                    if a[i][j]==a[k][l]:
+                        ct+=1
+                        break
+        if ct==len(a[i]):
+            del a[i]
+            break
+    return a 
+      
+str1="abcdefghijklmnopqrstuvwxyz"
+strr="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+n=int(input()) 
+str=input() 
+str2=input() 
+
+def inputConv(n,str,str2):
+    arr=[]
+    count=0;
+    for i in str:
+        if (i=="+"):
+            count+=1
+    lee=(len(str)-count)//n # no of Minterm
+    for i in range(lee): 
+        col = []
+        for j in range(i*(n+1),i*(n+1)+n):# it run in variable to variable in a particular Minterm
+            if(str[j] in str1):
+                col.append(0)
+                col.append(1)
+            else:
+                col.append(1)
+                col.append(0)
+        arr.append(col)
+    return arr
+def offsetConv(n,str2):
+    off=[]
+    count=0
+    cont=0
+    for i in str2:
+        if (i=="+"):
+            count+=1
+    cont=count+1 # basically tells no of minterm off set have        
+    le=((len(str2)-count)//n) # no of Minterm in offset
+    for i in range(le): 
+        col = []
+        for j in range(i*(n+1),i*(n+1)+n):# it run in variable to variable in a particular Minterm
+            if(str2[j] in str1):
+                col.append(0)
+                col.append(1)
+            elif(str2[j] in strr):
+                col.append(1)
+                col.append(0)
+            else:
+                col.append(1)
+                col.append(1)
+        off.append(col)
+    return off
+def printOut(n,str,str2):
+    new=[]
+    re=[]
+    nw=[]
+    ke=[]
+    ne=[]
+    count=0
+    cont=0
+    for i in str2:
+        if (i=="+"):
+            count+=1
+    cont=count+1
+    arr = inputConv(n,str,str2)
+    off = offsetConv(n,str2)
+    new=expandIn(arr,off,cont,n,len(arr)) #here we are storing the list of expansion  in new list 
+    ke=irredundant(new)
+    nw=reduce(ke)
+    ne=irredundant(nw)
+    re=expandIn(ne,off,cont,n,len(ne))
+    lst = []
+    for i in range(len(re)):
+        for j in range(0,len(re[i]),2):
+            if re[i][j]==1 and re[i][j+1]==0:
+                lst.append(strr[j//2])
+            elif re[i][j]==0 and re[i][j+1]==1:
+                lst.append(str1[j//2])
+            
+        if(i!=0 and i!=len(re)-1):
+            lst.append('+')
+    return lst
+re = printOut(n,str,str2)
+for i in range(len(re)):
+    print(re[i],end="")
